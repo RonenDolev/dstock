@@ -1,18 +1,4 @@
-{
-  "name": "dstock",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "axios": "^1.6.2",
-    "lightweight-charts": "^4.0.0",
-    "next": "14.0.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "swr": "^2.2.0"
-  }
-}
+cd C:\DstockClean
+git add .
+git commit -m "Add index.js and package.json for Vercel"
+git push -u origin master
