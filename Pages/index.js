@@ -16,10 +16,10 @@ export default function Home() {
         <div></div>
         <div style={{ padding: '20px' }}>
           <h1 style={{ fontSize: '60px' }}>Stock Analysis Generator</h1>
-          <p>Left content goes here (selector, table)</p>
+          <p>Left content goes here</p>
         </div>
         <div style={{ padding: '20px' }}>
-          <p>Right content goes here (charts, strategy)</p>
+          <p>Right content goes here</p>
         </div>
         <div></div>
       </main>
