@@ -6,24 +6,20 @@ export default function Home() {
       <Head>
         <title>DStock - Stock Analysis Generator</title>
       </Head>
-      <main
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '10% 40% 40% 10%',
-          background: '#f5f5f5',
-          minHeight: '100vh',
-          fontFamily: 'Bahnschrift'
-        }}
-      >
+      <main style={{
+        display: 'grid',
+        gridTemplateColumns: '10% 40% 40% 10%',
+        minHeight: '100vh',
+        background: '#f5f5f5',
+        fontFamily: 'Bahnschrift'
+      }}>
         <div></div>
         <div style={{ padding: '20px' }}>
-          <h1 style={{ fontSize: '60px', marginBottom: '20px' }}>
-            Stock Analysis Generator
-          </h1>
-          <p>Left content goes here (stock selector, table, etc.)</p>
+          <h1 style={{ fontSize: '60px' }}>Stock Analysis Generator</h1>
+          <p>Left content goes here (selector, table)</p>
         </div>
         <div style={{ padding: '20px' }}>
-          <p>Right content goes here (charts, strategy, etc.)</p>
+          <p>Right content goes here (charts, strategy)</p>
         </div>
         <div></div>
       </main>
