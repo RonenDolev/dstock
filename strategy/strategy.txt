@@ -1,0 +1,4 @@
+Investment Strategy:
+- Entry: Based on RSI, MACD, Momentum
+- Timeline Profits: 1D, 1W, 1M, 3M, 6M, 1Y, 5Y
+- Strategy adjusts to investment amount
