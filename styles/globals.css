@@ -1,0 +1,53 @@
+/* Basic container and grid structure */
+.container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: lightgray;
+}
+
+.left-panel,
+.right-panel {
+  padding: 20px;
+  background-color: white;
+}
+
+.left-panel {
+  width: 25%;
+}
+
+.center-panel {
+  width: 50%;
+  padding: 20px;
+}
+
+.right-panel {
+  width: 25%;
+}
+
+input {
+  padding: 10px;
+  font-size: 16px;
+  width: 100%;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+header {
+  background: #333;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.content {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px; /* space between panels */
+}
+
+h1 {
+  font-size: 2em;
+}

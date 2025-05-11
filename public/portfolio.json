@@ -1,0 +1,30 @@
+[
+  {
+    "symbol": "CSCO",
+    "amount": 100,
+    "price": 59.71,
+    "value": 5971,
+    "profit": 0
+  },
+  {
+    "symbol": "TSLA",
+    "amount": 100,
+    "price": 284.82,
+    "value": 28482,
+    "profit": 0
+  },
+  {
+    "symbol": "F",
+    "amount": 100,
+    "price": 10.28,
+    "value": 1028,
+    "profit": 0
+  },
+  {
+    "symbol": "NVDA",
+    "amount": 100,
+    "price": 117.37,
+    "value": 11737,
+    "profit": 0
+  }
+]
