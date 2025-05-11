@@ -186,7 +186,7 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": "AQO1OHrKKh3RuKzvZKhGKw0lxGyrlsHxcCKNBS_YOdv-Pb2AYlhl29qzjGb9f3JjcicY0q-n1fR3e48U", currency: "ILS" }}>
+    <PayPalScriptProvider options={{ "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID, currency: "ILS" }}>
       <div style={{ padding: '20px', backgroundColor: '#f0f0f0', fontFamily: 'Bahnschrift Light' }}>
         <h2 style={{ fontSize: '36px', color: 'black', marginBottom: '20px' }}>Stock Analysis Tools</h2>
 
@@ -210,6 +210,8 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
           <button style={{ backgroundColor: 'green', color: 'white', padding: '10px', fontWeight: 'light' }} onClick={() => handleBuy(false)}>Dummy Buy</button>
+<button style={{ backgroundColor: '#0070ba', color: 'white', padding: '10px', fontWeight: 'light' }} onClick={() => handleBuy(true)}>Real Buy (Manual)</button>
+
           <button style={{ backgroundColor: 'red', color: 'white', padding: '10px', fontWeight: 'light' }} onClick={() => handleSell(false)}>Dummy Sell</button>
           <button style={{ backgroundColor: 'red', color: 'white', padding: '10px', fontWeight: 'light' }} onClick={handleRealSell}>Real Sell</button>
           <div>
@@ -245,8 +247,6 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
   console.error("❌ PayPal ERROR DETAILS:", JSON.stringify(err, null, 2));
   alert("❌ PayPal Error: Check the browser console for details.");
 }}
-
-
             />
           </div>
         </div>
