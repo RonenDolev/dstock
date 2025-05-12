@@ -203,17 +203,31 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
               <tr key={i}>
                 <td style={cellStyle}>{p.symbol}</td>
                 <td style={cellStyle}>{p.amount}</td>
-                <td style={cellStyle}>${p.price?.toFixed(2)}</td>
-                <td style={cellStyle}>${p.currentPrice?.toFixed(2)}</td>
-                <td style={cellStyle}>${currentValue.toFixed(2)}</td>
+                <td style={cellStyle}>₪{p.price?.toFixed(2)}</td>
+                <td style={cellStyle}>₪{p.currentPrice?.toFixed(2)}</td>
+                <td style={cellStyle}>₪{currentValue.toFixed(2)}</td>
                 <td style={{ ...cellStyle, color }}>{percent.toFixed(2)}%</td>
-                <td style={{ ...cellStyle, color }}>${profit.toFixed(2)}</td>
+                <td style={{ ...cellStyle, color }}>₪{profit.toFixed(2)}</td>
                 <td style={cellStyle}><button onClick={() => deleteRow(p.symbol)}>🗑️</button></td>
               </tr>
             );
           })}
         </tbody>
       </table>
+
+      {portfolio.length > 0 && (() => {
+        const totalUSD = portfolio.reduce((sum, p) => sum + (p.currentPrice - p.price) * p.amount, 0);
+        const totalILS = totalUSD * 3.7;
+        const totalCost = portfolio.reduce((sum, p) => sum + p.price * p.amount, 0);
+        const totalChange = totalCost > 0 ? (totalUSD / totalCost) * 100 : 0;
+        const color = totalUSD > 0 ? 'green' : totalUSD < 0 ? 'red' : 'gray';
+        return (
+          <div style={{ marginTop: '10px', fontSize: '14px', fontWeight: 'bold' }}>
+            <div style={{ color }}>Profit: ₪{totalILS.toFixed(2)} / ${totalUSD.toFixed(2)}</div>
+            <div style={{ color }}>Total Change: {totalChange.toFixed(2)}%</div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
