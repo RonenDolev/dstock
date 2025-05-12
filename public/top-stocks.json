@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-05-08T07:12:20.988Z",
+  "shortTerm": [
+    {
+      "symbol": "COST",
+      "name": "Costco Wholesale Corp.",
+      "price": 1007.15,
+      "change": 10.19,
+      "profit": "10.19",
+      "recommendation": "Buy"
+    },
+    {
+      "symbol": "LLY",
+      "name": "Eli Lilly and Co.",
+      "price": 776.72,
+      "change": 9.99,
+      "profit": "9.99",
+      "recommendation": "Sell"
+    }
+  ],
+  "longTerm": [
+    {
+      "symbol": "COST",
+      "name": "Costco Wholesale Corp.",
+      "price": 1007.15,
+      "change": 30.8,
+      "profit": "30.80",
+      "recommendation": "Buy"
+    }
+  ]
+}

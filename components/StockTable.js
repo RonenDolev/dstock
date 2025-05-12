@@ -1,36 +1,61 @@
-import useSWR from 'swr';
-import axios from 'axios';
-
-const fetcher = (url) => axios.get(url).then(res => res.data);
+import { useEffect, useState } from 'react';
 
 export default function StockTable() {
-  const { data, error } = useSWR('/api/stockTable', fetcher, { refreshInterval: 300000 });
+  const [stocks, setStocks] = useState([]);
 
-  if (error) return <div>Failed to load stock data.</div>;
-  if (!data) return <div>Loading stock data...</div>;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/stockTable');
+        const data = await res.json();
+        setStocks(data);
+      } catch (err) {
+        console.error('Failed to fetch stock data:', err);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div style={{ marginTop: '30px' }}>
-      <h2 className="NormalCharacterStyle1">Real-Time US Stocks</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+    <div style={{
+      marginTop: '30px',
+      fontFamily: 'Bahnschrift',
+      fontSize: '12px',
+      backgroundColor: '#ffffff',
+      padding: '15px',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    }}>
+      <h3 style={{
+        fontSize: '18px',
+        marginBottom: '15px',
+        fontFamily: 'Bahnschrift',
+        color: '#231F20'
+      }}>
+        NASDAQ Stock Market Top 5
+      </h3>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ccc' }}>Symbol</th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ccc' }}>Price</th>
-            <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ccc' }}>Trend</th>
+          <tr style={{ backgroundColor: '#f0f0f0' }}>
+            <th style={{ textAlign: 'left', padding: '6px' }}>Symbol</th>
+            <th style={{ textAlign: 'left', padding: '6px' }}>Price</th>
+            <th style={{ textAlign: 'left', padding: '6px' }}>Change</th>
           </tr>
         </thead>
         <tbody>
-          {data.map(stock => (
+          {stocks.map((stock) => (
             <tr key={stock.symbol}>
-              <td style={{ padding: '8px', borderBottom: '1px solid #eee' }}>{stock.symbol}</td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #eee' }}>${stock.price.toFixed(2)}</td>
-              <td style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                {stock.trend === 'up' ? (
-                  <span style={{ color: 'green' }}>▲</span>
-                ) : (
-                  <span style={{ color: 'red' }}>▼</span>
-                )}
+              <td style={{ padding: '6px' }}>{stock.symbol}</td>
+              <td style={{ padding: '6px' }}>${stock.price}</td>
+              <td style={{
+                padding: '6px',
+                color: stock.change >= 0 ? '#008A40' : '#B92027'
+              }}>
+                {stock.change >= 0 ? '↑' : '↓'} {stock.change}%
               </td>
             </tr>
           ))}

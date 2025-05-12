@@ -1,5 +1,5 @@
 {
-  "name": "dstock",
+  "name": "stock-analysis-final-rebuild",
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
@@ -7,11 +7,24 @@
     "start": "next start"
   },
   "dependencies": {
-    "axios": "^1.6.2",
-    "lightweight-charts": "^4.0.0",
-    "next": "14.0.0",
+    "@paypal/react-paypal-js": "^8.8.3",
+    "axios": "^1.9.0",
+    "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "chartjs-plugin-zoom": "^2.2.0",
+    "date-fns": "^4.1.0",
+    "fancy-canvas": "^2.1.0",
+    "lightweight-charts": "^3.8.0",
+    "next": "14.1.0",
     "react": "18.2.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "18.2.0",
-    "swr": "^2.2.0"
+    "recharts": "^2.15.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "@types/react": "19.1.2",
+    "typescript": "5.8.3"
   }
 }

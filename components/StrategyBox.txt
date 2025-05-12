@@ -1,0 +1,140 @@
+// File: components/StrategyBox.js
+import React, { useEffect, useState, useRef } from 'react';
+import { fetchRealTimePrice, fetchStockDetails } from '../utils/fetchStockData';
+import axios from 'axios';
+
+const cache = {};
+
+import axios from 'axios'; // make sure this is at the top
+
+async function fetchFinnhubGrowth(symbol, monthsAgo) {
+  try {
+    const now = new Date();
+    const to = Math.floor(now.getTime() / 1000);
+    now.setMonth(now.getMonth() - monthsAgo);
+    const from = Math.floor(now.getTime() / 1000);
+    const token = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+
+    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=W&from=${from}&to=${to}&token=${token}`;
+    const res = await axios.get(url);
+    const data = res.data;
+
+    console.log(`[${symbol}] ${monthsAgo}M candles`, data); // ✅ log for debugging
+
+    if (data.s === 'no_data') {
+      console.warn(`⚠️ Finnhub returned no_data for ${symbol} (${monthsAgo}M)`);
+      return null;
+    }
+
+    if (data && data.o && data.o.length > 0 && data.c && data.c.length > 0) {
+      const start = data.o[0];
+      const end = data.c[data.c.length - 1];
+      return parseFloat((((end - start) / start) * 100).toFixed(2));
+    }
+
+    return null;
+  } catch (err) {
+    console.warn(`⚠️ Finnhub growth fetch failed for ${symbol}:`, err.message);
+    return null;
+  }
+}
+
+export default function StrategyBox({ selectedSymbol, setAnalysis }) {
+  const [price, setPrice] = useState(null);
+  const [details, setDetails] = useState({});
+  const [growth1m, setGrowth1m] = useState(null);
+  const [growth6m, setGrowth6m] = useState(null);
+  const cacheTime = useRef({});
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!selectedSymbol) return;
+      const now = Date.now();
+      if (cache[selectedSymbol] && now - cacheTime.current[selectedSymbol] < 5 * 60 * 1000) {
+        const cached = cache[selectedSymbol];
+        setPrice(cached.price);
+        setDetails(cached.details);
+        setGrowth1m(cached.g1);
+        setGrowth6m(cached.g6);
+        return;
+      }
+
+      try {
+        const [price, detailData, g1, g6] = await Promise.all([
+          fetchRealTimePrice(selectedSymbol),
+          fetchStockDetails(selectedSymbol),
+          fetchFinnhubGrowth(selectedSymbol, 1),
+          fetchFinnhubGrowth(selectedSymbol, 6)
+        ]);
+
+        setPrice(price);
+        setDetails(detailData.metrics || {});
+        setGrowth1m(g1);
+        setGrowth6m(g6);
+        cache[selectedSymbol] = { price, g1, g6, details: detailData.metrics || {} };
+        cacheTime.current[selectedSymbol] = now;
+
+        const stopLoss = price * (g1 > 10 ? 0.98 : g1 > 5 ? 0.965 : 0.95);
+        const target = price * (g6 > 20 ? 1.2 : g6 > 10 ? 1.15 : 1.1);
+        const risk = ((price - stopLoss) / price) * 100;
+        const reward = ((target - price) / price) * 100;
+
+        setAnalysis({ risk: parseFloat(risk.toFixed(2)), reward: parseFloat(reward.toFixed(2)), timeHorizon: '6M' });
+      } catch (err) {
+        console.error('❌ StrategyBox load error:', err.message);
+      }
+    };
+
+    loadData();
+  }, [selectedSymbol]);
+
+  const stopLoss = price && growth1m !== null ? price * (growth1m > 10 ? 0.98 : growth1m > 5 ? 0.965 : 0.95) : null;
+  const target = price && growth6m !== null ? price * (growth6m > 20 ? 1.2 : growth6m > 10 ? 1.15 : 1.1) : null;
+  const risk = stopLoss && price ? ((price - stopLoss) / price) * 100 : null;
+  const reward = target && price ? ((target - price) / price) * 100 : null;
+  const ratio = risk && reward ? (reward / risk).toFixed(2) : null;
+
+  const recommendation = () => {
+    if (growth1m === null || growth6m === null) return 'Loading...';
+    const g6 = parseFloat(growth6m);
+    const g1 = parseFloat(growth1m);
+
+    if (g6 > 5 && g1 > 1) return '🟢 ↑ Buy';
+    if ((g6 > 5 && g1 <= 1 && g1 >= -2) || (g6 > -2 && g1 > 3)) return '🟠 → Hold';
+    return '🔴 ↓ Sell';
+  };
+
+  return (
+    <div className="strategy-box">
+      <h2>Investment Strategy</h2>
+      <p><strong>Stock:</strong> {selectedSymbol}</p>
+      <p><strong>Current Price:</strong> {price ? `$${price.toFixed(2)}` : 'Loading...'}</p>
+
+      <h4>Fundamental Analysis</h4>
+      <p><strong>P/E Ratio:</strong> {details.pe_ratio ?? 'N/A'}</p>
+      <p><strong>EPS Growth:</strong> {details.eps_growth ?? 'N/A'}</p>
+      <p><strong>Debt to Equity:</strong> {details.debt_to_equity ?? 'N/A'}</p>
+
+      <h4>Performance</h4>
+      <p><strong>Growth (1M):</strong> {growth1m !== null ? `${growth1m.toFixed(2)}%` : 'No data'}</p>
+      <p><strong>Growth (6M):</strong> {growth6m !== null ? `${growth6m.toFixed(2)}%` : 'No data'}</p>
+
+      <h4>Recommendation</h4>
+      <p style={{
+        fontSize: '1.5em',
+        fontWeight: 'bold',
+        color: recommendation().includes('Buy') ? 'green' :
+               recommendation().includes('Hold') ? 'orange' : 'red'
+      }}>
+        Recommendation: {recommendation()}
+      </p>
+
+      <h4>Risk/Reward</h4>
+      <p><strong>Entry Range:</strong> {price ? `$${(price * 0.97).toFixed(2)} – $${(price * 0.98).toFixed(2)}` : 'N/A'}</p>
+      <p><strong>Target:</strong> {target?.toFixed(2) ?? 'N/A'}</p>
+      <p><strong>Stop-Loss:</strong> {stopLoss?.toFixed(2) ?? 'N/A'}</p>
+      <p><strong>Risk:</strong> {risk?.toFixed(1) ?? 'N/A'}% | <strong>Reward:</strong> {reward?.toFixed(1) ?? 'N/A'}%</p>
+      <p><strong>Ratio:</strong> {ratio ? `1:${ratio}` : 'N/A'}</p>
+    </div>
+  );
+}

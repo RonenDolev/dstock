@@ -1,5 +1,10 @@
-node_modules/
-.next/
+# .gitignore for Next.js + Node
+node_modules
+.next
 .env.local
-*.log
-*.zip
+.DS_Store
+npm-debug.log
+yarn-error.log
+dist
+out
+coverage
