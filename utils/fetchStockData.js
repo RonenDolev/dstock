@@ -63,6 +63,7 @@ export const top100 = [
   { symbol: 'HD', name: 'The Home Depot, Inc.' },
   { symbol: 'HCA', name: 'HCA Healthcare Inc.' },
   { symbol: 'HUM', name: 'Humana Inc.' },
+  { symbol: 'HPQ', name: 'HP Inc.' },
   { symbol: 'IDXX', name: 'IDEXX Laboratories Inc.' },
   { symbol: 'INTC', name: 'Intel Corp.' },
   { symbol: 'INTU', name: 'Intuit Inc.' },
