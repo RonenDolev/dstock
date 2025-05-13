@@ -17,8 +17,8 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   const updated = await Promise.all(
     portfolio.map(async (p) => {
       const livePrice = await fetchRealTimePrice(p.symbol);
-      const newValue = livePrice * p.amount;
-      const originalCost = p.amount * p.price;
+      const newValue = (livePrice * p.amount) / 100;
+      const originalCost = (p.amount * p.price) / 100;
       const profit = newValue - originalCost;
       const percentChange = originalCost > 0 ? ((newValue - originalCost) / originalCost) * 100 : 0;
       return {
@@ -83,12 +83,13 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
 
   const handleBuy = async () => {
     const price = await fetchRealTimePrice(selectedSymbol);
+    const quantity = amount / price;
     let updated = [...portfolio];
     const existing = updated.find(p => p.symbol === selectedSymbol);
     if (existing) {
-      existing.amount += amount;
+      existing.amount += quantity;
     } else {
-      updated.push({ symbol: selectedSymbol, amount, price });
+      updated.push({ symbol: selectedSymbol, amount: quantity, price });
     }
     setPortfolio(updated);
     saveToLocalStorage(updated);
@@ -97,7 +98,7 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
 
   const handleSell = async () => {
     let updated = portfolio.map(p =>
-      p.symbol === selectedSymbol ? { ...p, amount: p.amount - amount } : p
+      p.symbol === selectedSymbol ? { ...p, amount: p.amount - (amount / p.price) } : p
     ).filter(p => p.amount > 0);
     setPortfolio(updated);
     saveToLocalStorage(updated);
@@ -135,7 +136,7 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
         ))}
       </select>
 
-      <label style={{ fontSize: '14px' }}>Amount of Investment</label><br />
+      <label style={{ fontSize: '14px' }}>Amount of Investment (₪)</label><br />
       <input
         type="number"
         value={amount}
@@ -194,15 +195,15 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
           {portfolio.length === 0 ? (
             <tr><td colSpan="8" style={cellStyle}>No investments yet.</td></tr>
           ) : portfolio.map((p, i) => {
-            const originalCost = p.amount * p.price;
-            const currentValue = p.currentPrice * p.amount;
+            const originalCost = (p.amount * p.price) / 100;
+            const currentValue = (p.currentPrice * p.amount) / 100;
             const profit = currentValue - originalCost;
             const percent = originalCost > 0 ? (profit / originalCost) * 100 : 0;
             const color = profit > 0 ? 'green' : profit < 0 ? 'red' : 'gray';
             return (
               <tr key={i}>
                 <td style={cellStyle}>{p.symbol}</td>
-                <td style={cellStyle}>{p.amount}</td>
+                <td style={cellStyle}>{p.amount.toFixed(2)}</td>
                 <td style={cellStyle}>₪{p.price?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{p.currentPrice?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{currentValue.toFixed(2)}</td>
@@ -216,14 +217,13 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
       </table>
 
       {portfolio.length > 0 && (() => {
-        const totalUSD = portfolio.reduce((sum, p) => sum + (p.currentPrice - p.price) * p.amount, 0);
-        const totalILS = totalUSD * 3.7;
-        const totalCost = portfolio.reduce((sum, p) => sum + p.price * p.amount, 0);
-        const totalChange = totalCost > 0 ? (totalUSD / totalCost) * 100 : 0;
-        const color = totalUSD > 0 ? 'green' : totalUSD < 0 ? 'red' : 'gray';
+        const totalProfit = portfolio.reduce((sum, p) => sum + ((p.currentPrice - p.price) * p.amount) / 100, 0);
+        const totalCost = portfolio.reduce((sum, p) => (sum + p.price * p.amount) / 100, 0);
+        const totalChange = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+        const color = totalProfit > 0 ? 'green' : totalProfit < 0 ? 'red' : 'gray';
         return (
           <div style={{ marginTop: '10px', fontSize: '14px', fontWeight: 'bold' }}>
-            <div style={{ color }}>Profit: ₪{totalILS.toFixed(2)} / ${totalUSD.toFixed(2)}</div>
+            <div style={{ color }}>Profit: ₪{totalProfit.toFixed(2)}</div>
             <div style={{ color }}>Total Change: {totalChange.toFixed(2)}%</div>
           </div>
         );
