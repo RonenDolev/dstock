@@ -4,6 +4,13 @@ import axios from 'axios';
 const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
 const baseUrl = 'https://api.polygon.io';
 
+export const getExchangePrefix = (symbol) => {
+  const nyseOnly = [
+    'WELL', 'BA', 'JNJ', 'XOM', 'WMT', 'T', 'DE', 'CVX', 'NEE', 'DUK', 'SO', 'D', 'ED', 'UPS', 'UNP', 'USB'
+  ];
+  return nyseOnly.includes(symbol) ? 'NYSE' : 'NASDAQ';
+};
+
 export const top100 = [
   { symbol: '^DJI', name: 'Dow Jones Industrial Average' },
   { symbol: '^GSPC', name: 'S&P 500 Index' },
@@ -136,8 +143,6 @@ export const top100 = [
   { symbol: 'WMT', name: 'Walmart Inc.' },
   { symbol: 'XOM', name: 'Exxon Mobil Corp.' },
   { symbol: 'ZTS', name: 'Zoetis Inc.' }
-
-
 ];
 
 const normalizeSymbol = (symbol) => {
