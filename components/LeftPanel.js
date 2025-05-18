@@ -1,6 +1,6 @@
 // File: components/LeftPanel.js
 import React, { useState, useEffect } from 'react';
-import { fetchRealTimePrice, getGrowth, top100, fetchTop5SixMonthGrowth, getRiskReward } from '../utils/fetchStockData';
+import { fetchRealTimePrice, getGrowth, top100, fetchTop5SixMonthGrowth, getRiskReward, fetchMarketIndicators } from '../utils/fetchStockData';
 
 const LOCAL_STORAGE_KEY = 'investmentTable';
 
@@ -17,8 +17,8 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   const updated = await Promise.all(
     portfolio.map(async (p) => {
       const livePrice = await fetchRealTimePrice(p.symbol);
-      const newValue = (livePrice * p.amount) / 100;
-      const originalCost = (p.amount * p.price) / 100;
+      const newValue = livePrice * p.amount;
+      const originalCost = p.amount * p.price;
       const profit = newValue - originalCost;
       const percentChange = originalCost > 0 ? ((newValue - originalCost) / originalCost) * 100 : 0;
       return {
@@ -35,12 +35,19 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   saveToLocalStorage(updated);
 };
 
-const LeftPanel = ({ onStockSelect, setAnalysis }) => {
+  const LeftPanel = ({ onStockSelect, setAnalysis }) => {
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
   const [amount, setAmount] = useState(100);
   const [portfolio, setPortfolio] = useState([]);
   const [top5Short, setTop5Short] = useState([]);
   const [top5Long, setTop5Long] = useState([]);
+  const [indicators, setIndicators] = useState([]);
+
+  const usdRate = (() => {
+    const usd = indicators.find(i => i.label === 'USD/ILS')?.price;
+    const parsed = parseFloat(usd);
+    return isNaN(parsed) ? 3.7 : parsed;
+  })();
 
   useEffect(() => {
     const stored = loadFromLocalStorage();
@@ -49,6 +56,15 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
       updatePortfolioPrices(stored, setPortfolio);
     }
   }, []);
+
+  useEffect(() => {
+    const loadIndicators = async () => {
+      const data = await fetchMarketIndicators();
+      setIndicators(data);
+    };
+    loadIndicators();
+  }, []);
+
 
   useEffect(() => {
     if (typeof onStockSelect === 'function') onStockSelect(selectedSymbol);
@@ -182,7 +198,7 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
         <thead>
           <tr>
             <th style={cellStyle}>Stock</th>
-            <th style={cellStyle}>Amount</th>
+            <th style={cellStyle}>Share Quantity</th>
             <th style={cellStyle}>Buy Price</th>
             <th style={cellStyle}>Current Price</th>
             <th style={cellStyle}>Value</th>
@@ -195,8 +211,8 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
           {portfolio.length === 0 ? (
             <tr><td colSpan="8" style={cellStyle}>No investments yet.</td></tr>
           ) : portfolio.map((p, i) => {
-            const originalCost = (p.amount * p.price) / 100;
-            const currentValue = (p.currentPrice * p.amount) / 100;
+            const originalCost = (p.amount * p.price);
+            const currentValue = (p.currentPrice * p.amount);
             const profit = currentValue - originalCost;
             const percent = originalCost > 0 ? (profit / originalCost) * 100 : 0;
             const color = profit > 0 ? 'green' : profit < 0 ? 'red' : 'gray';

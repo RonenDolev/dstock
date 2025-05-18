@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { getExchangePrefix } from '../utils/fetchStockData';
 
 // Use ETF alternatives for index symbols to avoid TradingView restrictions
 const getTradingViewSymbol = (symbol) => {
@@ -8,7 +9,8 @@ const getTradingViewSymbol = (symbol) => {
     '^DJI': 'AMEX:DIA',
     '^RUT': 'AMEX:IWM'
   };
-  return map[symbol] || `NASDAQ:${symbol}`;
+  if (map[symbol]) return map[symbol];
+  return `${getExchangePrefix(symbol)}:${symbol}`;
 };
 
 const CenterPanel = ({ selectedStock }) => {
@@ -24,7 +26,7 @@ const CenterPanel = ({ selectedStock }) => {
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: `${tvSymbol}`, // string literal format
+      symbol: `${tvSymbol}`,
       interval: "60",
       timezone: "Etc/UTC",
       theme: "light",
@@ -49,7 +51,7 @@ const CenterPanel = ({ selectedStock }) => {
   return (
     <div style={{ width: '100%', padding: '20px', backgroundColor: '#f0f0f0' }}>
       <h2 style={{ fontSize: '28px', fontFamily: 'Bahnschrift Light', marginBottom: '30px' }}>Technical Chart</h2>
-      
+
       <div id="short-term-chart" ref={shortTermRef} style={{ height: '620px', marginBottom: '20px' }} />
 
       <p style={{ fontSize: '14px', color: '#333', lineHeight: '1.6' }}>
