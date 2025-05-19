@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   const { symbol } = req.query;
   if (!symbol) return res.status(400).json({ error: 'Missing stock symbol' });
 
-  const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  const apiKey = process.env.POLYGON_API_KEY;
 
   const normalized = symbol
     .replace('^GSPC', 'SPX')
