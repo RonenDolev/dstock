@@ -1,6 +1,16 @@
 // File: components/LeftPanel.js
 import React, { useState, useEffect } from 'react';
-import { fetchRealTimePrice, getGrowth, top100, fetchTop5SixMonthGrowth, getRiskReward, fetchMarketIndicators } from '../utils/fetchStockData';
+import {
+  fetchRealTimePrice,
+  getGrowth,
+  fetchTop5SixMonthGrowth,
+  getRiskReward,
+  fetchMarketIndicators
+} from '../utils/fetchStockData';
+
+import { stockList } from '../utils/stockList';
+import { getExchangePrefix } from '../utils/stockList';
+
 
 const LOCAL_STORAGE_KEY = 'investmentTable';
 
@@ -17,13 +27,10 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   const updated = await Promise.all(
     portfolio.map(async (p) => {
       const livePrice = await fetchRealTimePrice(p.symbol);
-      if (!livePrice || livePrice === 0) return p; // Skip update if price invalid
-
       const newValue = livePrice * p.amount;
       const originalCost = p.amount * p.price;
       const profit = newValue - originalCost;
       const percentChange = originalCost > 0 ? ((newValue - originalCost) / originalCost) * 100 : 0;
-
       return {
         ...p,
         currentPrice: livePrice,
@@ -38,7 +45,7 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   saveToLocalStorage(updated);
 };
 
-const LeftPanel = ({ onStockSelect, setAnalysis }) => {
+  const LeftPanel = ({ onStockSelect, setAnalysis }) => {
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
   const [amount, setAmount] = useState(100);
   const [portfolio, setPortfolio] = useState([]);
@@ -68,6 +75,7 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
     loadIndicators();
   }, []);
 
+
   useEffect(() => {
     if (typeof onStockSelect === 'function') onStockSelect(selectedSymbol);
   }, [selectedSymbol, onStockSelect]);
@@ -77,11 +85,11 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
       const topShort = await fetchTop5SixMonthGrowth();
 
       const longCandidates = await Promise.all(
-        top100.map(async (s) => {
+        stockList.map(async (s) => {
           const g12 = await getGrowth(s.symbol, 12);
           const strategyData = await getRiskReward(s.symbol);
           const rr = strategyData?.longTerm?.reward;
-          if (g12 !== null && g12 > 0 && rr && rr > 0) {
+          if (g12 !== null && rr !== null) {
             return { ...s, g12 };
           }
           return null;
@@ -93,21 +101,14 @@ const LeftPanel = ({ onStockSelect, setAnalysis }) => {
         .sort((a, b) => b.g12 - a.g12)
         .slice(0, 5);
 
+        console.log("✅ Long-Term Stocks After Filtering:", validLong);
+
+
       setTop5Short(topShort);
       setTop5Long(validLong);
     };
     computeTopStocks();
   }, []);
-// עדכון מחירים כל 60 שניות
-useEffect(() => {
-  const interval = setInterval(() => {
-    if (portfolio.length > 0) {
-      updatePortfolioPrices(portfolio, setPortfolio);
-    }
-  }, 60000); // כל דקה
-
-  return () => clearInterval(interval); // מנקה את הטיימר כשעוזבים את הדף
-}, [portfolio]);
 
   const handleBuy = async () => {
     const price = await fetchRealTimePrice(selectedSymbol);
@@ -120,7 +121,8 @@ useEffect(() => {
       updated.push({ symbol: selectedSymbol, amount: quantity, price });
     }
     setPortfolio(updated);
-    updatePortfolioPrices(updated, setPortfolio); // no saveToLocalStorage here
+    saveToLocalStorage(updated);
+    updatePortfolioPrices(updated, setPortfolio);
   };
 
   const handleSell = async () => {
@@ -128,7 +130,8 @@ useEffect(() => {
       p.symbol === selectedSymbol ? { ...p, amount: p.amount - (amount / p.price) } : p
     ).filter(p => p.amount > 0);
     setPortfolio(updated);
-    updatePortfolioPrices(updated, setPortfolio); // no saveToLocalStorage here
+    saveToLocalStorage(updated);
+    updatePortfolioPrices(updated, setPortfolio);
   };
 
   const deleteRow = (symbol) => {
@@ -144,6 +147,10 @@ useEffect(() => {
     border: '1px solid #ccc', padding: '6px', textAlign: 'left'
   };
 
+  if (!Array.isArray(stockList)) {
+    return <div style={{ padding: '20px', color: 'red' }}>⚠️ Stock list failed to load. Please check data source.</div>;
+  }
+
   return (
     <div style={{ padding: '20px', backgroundColor: '#f0f0f0', fontFamily: 'Bahnschrift Light' }}>
       <h2 style={{ fontSize: '36px', color: 'black', marginBottom: '20px' }}>Stock Analysis Tools</h2>
@@ -153,7 +160,7 @@ useEffect(() => {
         value={selectedSymbol}
         onChange={e => setSelectedSymbol(e.target.value)}
         style={{ width: '100%', padding: '10px', marginBottom: '20px', fontSize: '14px' }}>
-        {top100.map(p => (
+        {stockList.map(p => (
           <option key={p.symbol} value={p.symbol}>{p.symbol} - {p.name}</option>
         ))}
       </select>
@@ -188,15 +195,25 @@ useEffect(() => {
       <h4 style={{ fontSize: '16px', marginBottom: '6px' }}>Top 5 Long-Term (1Y) Buy Opportunities</h4>
       <table style={{ ...tableStyle, marginBottom: '20px' }}>
         <thead><tr><th style={cellStyle}>Symbol</th><th style={cellStyle}>Name</th><th style={cellStyle}>Growth</th></tr></thead>
-        <tbody>
-          {top5Long.map((s, i) => (
-            <tr key={i}>
-              <td style={cellStyle}>{s.symbol}</td>
-              <td style={cellStyle}>{s.name}</td>
-              <td style={{ ...cellStyle, color: 'green' }}>{s.g12?.toFixed(2)}%</td>
-            </tr>
-          ))}
-        </tbody>
+        
+       <tbody>
+  {top5Long.length === 0 ? (
+    <tr>
+      <td colSpan="3" style={{ textAlign: 'center', color: 'orange' }}>
+        ⚠️ No valid long-term stocks found.
+      </td>
+    </tr>
+  ) : (
+    top5Long.map((s, i) => (
+      <tr key={i}>
+        <td style={cellStyle}>{s.symbol}</td>
+        <td style={cellStyle}>{s.name}</td>
+        <td style={{ ...cellStyle, color: 'green' }}>{s.g12?.toFixed(2)}%</td>
+      </tr>
+    ))
+  )}
+</tbody>
+
       </table>
 
       <h4 style={{ fontSize: '16px', marginBottom: '10px' }}>My Investments</h4>
@@ -225,7 +242,7 @@ useEffect(() => {
             return (
               <tr key={i}>
                 <td style={cellStyle}>{p.symbol}</td>
-                <td style={cellStyle}>{p.amount.toFixed(4)}</td>
+                <td style={cellStyle}>{p.amount.toFixed(2)}</td>
                 <td style={cellStyle}>₪{p.price?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{p.currentPrice?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{currentValue.toFixed(2)}</td>
