@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { getExchangePrefix } from '../utils/fetchStockData';
+import { getExchangePrefix } from '../utils/stockList';
 
 // Use ETF alternatives for index symbols to avoid TradingView restrictions
 const getTradingViewSymbol = (symbol) => {
