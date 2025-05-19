@@ -17,10 +17,13 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   const updated = await Promise.all(
     portfolio.map(async (p) => {
       const livePrice = await fetchRealTimePrice(p.symbol);
+      if (!livePrice || livePrice === 0) return p; // Skip update if price invalid
+
       const newValue = livePrice * p.amount;
       const originalCost = p.amount * p.price;
       const profit = newValue - originalCost;
       const percentChange = originalCost > 0 ? ((newValue - originalCost) / originalCost) * 100 : 0;
+
       return {
         ...p,
         currentPrice: livePrice,
@@ -35,7 +38,7 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   saveToLocalStorage(updated);
 };
 
-  const LeftPanel = ({ onStockSelect, setAnalysis }) => {
+const LeftPanel = ({ onStockSelect, setAnalysis }) => {
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
   const [amount, setAmount] = useState(100);
   const [portfolio, setPortfolio] = useState([]);
@@ -64,7 +67,6 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
     };
     loadIndicators();
   }, []);
-
 
   useEffect(() => {
     if (typeof onStockSelect === 'function') onStockSelect(selectedSymbol);
@@ -96,6 +98,16 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
     };
     computeTopStocks();
   }, []);
+// עדכון מחירים כל 60 שניות
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (portfolio.length > 0) {
+      updatePortfolioPrices(portfolio, setPortfolio);
+    }
+  }, 60000); // כל דקה
+
+  return () => clearInterval(interval); // מנקה את הטיימר כשעוזבים את הדף
+}, [portfolio]);
 
   const handleBuy = async () => {
     const price = await fetchRealTimePrice(selectedSymbol);
@@ -108,8 +120,7 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
       updated.push({ symbol: selectedSymbol, amount: quantity, price });
     }
     setPortfolio(updated);
-    saveToLocalStorage(updated);
-    updatePortfolioPrices(updated, setPortfolio);
+    updatePortfolioPrices(updated, setPortfolio); // no saveToLocalStorage here
   };
 
   const handleSell = async () => {
@@ -117,8 +128,7 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
       p.symbol === selectedSymbol ? { ...p, amount: p.amount - (amount / p.price) } : p
     ).filter(p => p.amount > 0);
     setPortfolio(updated);
-    saveToLocalStorage(updated);
-    updatePortfolioPrices(updated, setPortfolio);
+    updatePortfolioPrices(updated, setPortfolio); // no saveToLocalStorage here
   };
 
   const deleteRow = (symbol) => {
@@ -133,10 +143,6 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
   const cellStyle = {
     border: '1px solid #ccc', padding: '6px', textAlign: 'left'
   };
-
-  if (!Array.isArray(top100)) {
-    return <div style={{ padding: '20px', color: 'red' }}>⚠️ Stock list failed to load. Please check data source.</div>;
-  }
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#f0f0f0', fontFamily: 'Bahnschrift Light' }}>
@@ -219,7 +225,7 @@ const updatePortfolioPrices = async (portfolio, setPortfolio) => {
             return (
               <tr key={i}>
                 <td style={cellStyle}>{p.symbol}</td>
-                <td style={cellStyle}>{p.amount.toFixed(2)}</td>
+                <td style={cellStyle}>{p.amount.toFixed(4)}</td>
                 <td style={cellStyle}>₪{p.price?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{p.currentPrice?.toFixed(2)}</td>
                 <td style={cellStyle}>₪{currentValue.toFixed(2)}</td>
